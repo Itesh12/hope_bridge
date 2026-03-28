@@ -11,9 +11,10 @@ export interface ICase extends Document {
   treatmentNeeded: string;
   description: string;
   headline: string;
-  targetAmount: number;
+  targetAmount?: number;
   raisedAmount: number;
-  helpType: ('fund' | 'blood' | 'marrow')[];
+  helpType: ('fund' | 'blood' | 'marrow' | 'other')[];
+  otherHelpDetail?: string;
   documents: string[]; // URLs up to 5
   verificationStatus: 'pending' | 'approved' | 'rejected';
   isUrgent: boolean;
@@ -37,9 +38,10 @@ const CaseSchema: Schema = new Schema({
   treatmentNeeded: { type: String, required: true },
   description: { type: String, required: true },
   headline: { type: String, required: true },
-  targetAmount: { type: Number, required: true },
+  targetAmount: { type: Number, default: 0 },
   raisedAmount: { type: Number, default: 0 },
-  helpType: [{ type: String, enum: ['fund', 'blood', 'marrow'], default: ['fund'] }],
+  helpType: [{ type: String, enum: ['fund', 'blood', 'marrow', 'other'], default: ['fund'] }],
+  otherHelpDetail: { type: String },
   documents: {
     type: [String],
     validate: [

@@ -10,7 +10,24 @@ export const createCaseSchema = z.object({
   treatmentNeeded: z.string().min(5, "Treatment details are required"),
   description: z.string().min(20, "Please provide a more detailed description"),
   headline: z.string().min(10, "A catchy headline is required").max(100),
-  targetAmount: z.coerce.number().positive("Target amount must be greater than zero"),
-  helpType: z.array(z.enum(['fund', 'blood', 'marrow'])).min(1, "Select at least one help type"),
+  targetAmount: z.coerce.number().optional(),
+  helpType: z.array(z.enum(['fund', 'blood', 'marrow', 'other'])).min(1, "Select at least one help type"),
+  otherHelpDetail: z.string().optional(),
   isUrgent: z.boolean().optional(),
+}).superRefine((data, ctx) => {
+  if (data.helpType.includes('fund') && (!data.targetAmount || data.targetAmount <= 0)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Target amount must be greater than zero when requesting funds",
+      path: ["targetAmount"],
+    });
+  }
+  
+  if (data.helpType.includes('other') && (!data.otherHelpDetail || data.otherHelpDetail.length < 5)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Please provide details for the 'Other' help type (min 5 characters)",
+      path: ["otherHelpDetail"],
+    });
+  }
 });
