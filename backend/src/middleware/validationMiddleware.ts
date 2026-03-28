@@ -4,10 +4,27 @@ import { type ZodSchema, ZodError } from 'zod';
 export const validateRequest = (schema: ZodSchema) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await schema.parseAsync(req.body);
+      // Multer sends everything as a string. We need to parse fields that are objects/arrays.
+      const dataToParse = { ...req.body };
+      for (const key in dataToParse) {
+        if (typeof dataToParse[key] === 'string') {
+          try {
+            const parsed = JSON.parse(dataToParse[key]);
+            if (typeof parsed === 'object') {
+              dataToParse[key] = parsed;
+            }
+          } catch (e) {
+            // Not JSON, leave as is
+          }
+        }
+      }
+
+      await schema.parseAsync(dataToParse);
       next();
     } catch (error) {
       if (error instanceof ZodError) {
+        console.log('Validation failed for request:', req.body);
+        console.log('Errors:', error.issues);
         return res.status(400).json({
           success: false,
           message: 'Validation failed',
