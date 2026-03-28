@@ -190,10 +190,16 @@ export default function CaseDetailsPage({ params }: { params: Promise<{ id: stri
              >
                 <Maximize2 className="w-5 h-5" />
              </Button>
-             <DialogClose asChild>
-                <Button variant="outline" size="icon" className="w-12 h-12 rounded-2xl bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/40 transition-all">
-                   <X className="w-5 h-5" />
-                </Button>
+             <DialogClose 
+               render={
+                 <Button 
+                   variant="outline" 
+                   size="icon" 
+                   className="w-12 h-12 rounded-2xl bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/40 transition-all" 
+                 />
+               }
+             >
+                <X className="w-5 h-5" />
              </DialogClose>
           </div>
           
