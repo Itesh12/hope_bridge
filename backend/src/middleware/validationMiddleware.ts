@@ -10,9 +10,8 @@ export const validateRequest = (schema: ZodSchema) => {
         if (typeof dataToParse[key] === 'string') {
           try {
             const parsed = JSON.parse(dataToParse[key]);
-            if (typeof parsed === 'object') {
-              dataToParse[key] = parsed;
-            }
+            // If it's valid JSON (object, array, boolean, number), use the parsed value
+            dataToParse[key] = parsed;
           } catch (e) {
             // Not JSON, leave as is
           }
