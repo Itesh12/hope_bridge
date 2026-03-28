@@ -113,6 +113,7 @@ export default function CaseDetailsPage({ params }: { params: Promise<{ id: stri
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCase = async () => {
@@ -173,7 +174,6 @@ export default function CaseDetailsPage({ params }: { params: Promise<{ id: stri
   );
 
   const pct = Math.round((data.raisedAmount / data.targetAmount) * 100);
-  const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen bg-slate-50/50">
