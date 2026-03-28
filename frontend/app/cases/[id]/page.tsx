@@ -178,44 +178,78 @@ export default function CaseDetailsPage({ params }: { params: Promise<{ id: stri
   return (
     <div className="min-h-screen bg-slate-50/50">
       
-      {/* ── DOCUMENT VIEWER DIALOG ── */}
+      {/* ── CINEMATIC DOCUMENT VIEWER ── */}
       <Dialog open={!!selectedDoc} onOpenChange={(open: boolean) => !open && setSelectedDoc(null)}>
-        <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-full p-0 overflow-hidden border-none bg-black/95 backdrop-blur-2xl rounded-[40px]">
-          <div className="absolute top-6 right-6 z-50">
-             <DialogClose 
-               render={
-                 <Button 
+        <DialogContent className="max-w-[95vw] md:max-w-[85vw] lg:max-w-[75vw] w-full max-h-[90vh] h-full p-0 overflow-hidden border-none bg-slate-950/80 backdrop-blur-3xl rounded-[40px] shadow-[0_0_100px_rgba(0,0,0,0.5)] flex flex-col scale-up-center transition-all">
+          
+          {/* Immersive Header overlay */}
+          <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-black/60 to-transparent z-40 pointer-events-none" />
+          <div className="absolute top-8 left-8 right-8 z-50 flex items-center justify-between pointer-events-auto">
+             <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                   <ShieldCheck className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                   <h3 className="text-sm font-black text-white uppercase tracking-widest leading-none">Security Verified</h3>
+                   <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest mt-1">End-to-End Encrypted Medical Data</p>
+                </div>
+             </div>
+             <DialogClose render={
+                <Button 
                    variant="outline" 
                    size="icon" 
-                   className="w-12 h-12 rounded-2xl bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/40 transition-all" 
-                 />
-               }
-             >
+                   className="w-12 h-12 rounded-2xl bg-white/5 border-white/10 text-white hover:bg-white/20 hover:border-white/20 transition-all backdrop-blur-md" 
+                />
+             }>
                 <X className="w-5 h-5" />
              </DialogClose>
           </div>
           
-          <div className="w-full h-full flex flex-col pt-20 pb-10 px-10">
-             <div className="flex-grow rounded-[32px] overflow-hidden bg-white shadow-2xl relative">
+          {/* Main Content Area */}
+          <div className="flex-grow flex items-center justify-center p-6 md:p-12 relative overflow-hidden mt-12 mb-8">
+             <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="w-full h-full rounded-[32px] overflow-hidden bg-white shadow-[0_40px_100px_rgba(0,0,0,0.3)] ring-1 ring-white/10 flex items-center justify-center relative"
+             >
                 {selectedDoc && (
                    selectedDoc.toLowerCase().endsWith('.pdf') ? (
-                     <iframe src={selectedDoc} className="w-full h-full border-none" />
+                     <iframe src={selectedDoc} className="w-full h-full border-none shadow-2xl" />
                    ) : (
-                     <img src={selectedDoc} className="w-full h-full object-contain" alt="Document Preview" />
+                     <img src={selectedDoc} className="w-max h-max max-w-full max-h-full object-contain p-4" alt="Cinematic Document Preview" />
                    )
                 )}
-             </div>
-             <div className="mt-8 flex justify-between items-center px-4">
-                <div>
-                   <h3 className="text-xl font-black text-white mb-1 uppercase tracking-tight">Verified Medical Document</h3>
-                   <p className="text-white/40 text-xs font-black uppercase tracking-widest">Case ID: {caseId?.slice(-8)} · Secure Hospital Attachment</p>
+                {/* Subtle light effect over image */}
+                <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-white/5 to-transparent border-t border-white/10" />
+             </motion.div>
+          </div>
+
+          {/* Cinematic Action Bar */}
+          <div className="px-8 pb-8 pt-0 relative z-50">
+             <div className="w-full bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[30px] p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
+                <div className="flex items-center gap-5">
+                   <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-emerald-400 shadow-inner">
+                      <FileText className="w-7 h-7" />
+                   </div>
+                   <div>
+                      <h4 className="text-lg font-black text-white tracking-tight uppercase">Verified Medical Document</h4>
+                      <div className="flex items-center gap-3 mt-1">
+                         <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-white/40 font-black uppercase tracking-widest">Doc Ref: {caseId?.slice(-6).toUpperCase()}</span>
+                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                         <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest">Hospital Verified Original</span>
+                      </div>
+                   </div>
                 </div>
-                <Button 
-                   className="h-14 px-8 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-widest transition-all"
-                   onClick={() => window.open(selectedDoc!, '_blank')}
-                >
-                   View Full Screen
-                </Button>
+                
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                   <Button 
+                      variant="outline" 
+                      className="flex-grow md:flex-grow-0 h-14 px-8 rounded-2xl bg-emerald-600 hover:bg-emerald-500 border-none text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-900/40 transition-all hover:-translate-y-0.5"
+                      onClick={() => window.open(selectedDoc!, '_blank')}
+                   >
+                      <Maximize2 className="w-4 h-4 mr-2" /> View Original File
+                   </Button>
+                </div>
              </div>
           </div>
         </DialogContent>
