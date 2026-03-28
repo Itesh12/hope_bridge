@@ -1,6 +1,6 @@
 import express from 'express';
 import { createCase, getCases, getCase, updateCase, getMyCases } from '../controllers/caseController.js';
-import { protect, authorize } from '../middleware/authMiddleware.js';
+import { protect, authorize, optionalProtect } from '../middleware/authMiddleware.js';
 import { validateRequest } from '../middleware/validationMiddleware.js';
 import { createCaseSchema } from '../validations/caseValidation.js';
 import { upload } from '../middleware/uploadMiddleware.js';

@@ -24,6 +24,10 @@ import {
   Droplets,
   HeartPulse,
   Lock as LockIcon,
+  RotateCcw,
+  Plus,
+  Minus,
+  Hand,
   X,
   Maximize2
 } from "lucide-react";
@@ -67,6 +71,7 @@ interface ICaseDetail {
   updates: ICaseUpdate[];
   patientImage?: string;
   coverImage?: string;
+  isOwner?: boolean;
   documents: string[];
 }
 
@@ -114,6 +119,7 @@ export default function CaseDetailsPage({ params }: { params: Promise<{ id: stri
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
 
   useEffect(() => {
     const fetchCase = async () => {
@@ -144,7 +150,8 @@ export default function CaseDetailsPage({ params }: { params: Promise<{ id: stri
           updates: [],
           patientImage: c.patientImage,
           coverImage: c.coverImage,
-          documents: c.documents || []
+          documents: c.documents || [],
+          isOwner: res.data.isOwner
         });
       } catch (err: any) {
         console.error("Failed to fetch case:", err);
@@ -194,29 +201,84 @@ export default function CaseDetailsPage({ params }: { params: Promise<{ id: stri
                    <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest mt-1">End-to-End Encrypted Medical Data</p>
                 </div>
              </div>
-             <DialogClose render={
-                <Button 
-                   variant="outline" 
-                   size="icon" 
-                   className="w-12 h-12 rounded-2xl bg-white/5 border-white/10 text-white hover:bg-white/20 hover:border-white/20 transition-all backdrop-blur-md" 
-                />
-             }>
-                <X className="w-5 h-5" />
-             </DialogClose>
+             <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-2xl p-1 mr-2 backdrop-blur-md">
+                   <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="w-10 h-10 rounded-xl text-white hover:bg-white/10"
+                      onClick={() => setZoom(prev => Math.max(prev - 0.5, 1))}
+                      disabled={zoom <= 1}
+                   >
+                      <Minus className="w-4 h-4" />
+                   </Button>
+                   <div className="px-2 min-w-[45px] text-center text-[10px] font-black text-white/40 uppercase tracking-widest">
+                      {Math.round(zoom * 100)}%
+                   </div>
+                   <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="w-10 h-10 rounded-xl text-white hover:bg-white/10"
+                      onClick={() => setZoom(prev => Math.min(prev + 0.5, 4))}
+                   >
+                      <Plus className="w-4 h-4" />
+                   </Button>
+                   <div className="w-px h-4 bg-white/10 mx-1" />
+                   <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="w-10 h-10 rounded-xl text-white hover:bg-white/10"
+                      onClick={() => setZoom(1)}
+                   >
+                      <RotateCcw className="w-4 h-4" />
+                   </Button>
+                </div>
+                <DialogClose render={
+                   <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="w-12 h-12 rounded-2xl bg-white/5 border-white/10 text-white hover:bg-white/20 hover:border-white/20 transition-all backdrop-blur-md" 
+                   />
+                }>
+                   <X className="w-5 h-5" />
+                </DialogClose>
+             </div>
           </div>
           
           {/* Main Content Area */}
-          <div className="flex-grow flex items-center justify-center p-6 md:p-12 relative overflow-hidden mt-12 mb-8">
+          <div className="flex-grow flex items-center justify-center p-6 md:p-12 relative overflow-hidden mt-12 mb-8 bg-black/20">
+             {zoom > 1 && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-emerald-500/90 text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-xl flex items-center gap-2 backdrop-blur-sm transition-all animate-bounce">
+                   <Hand className="w-3 h-3" /> Click and Drag to Explore
+                </div>
+             )}
              <motion.div 
+                drag={zoom > 1}
+                dragConstraints={{ left: -500, right: 500, top: -500, bottom: 500 }}
                 initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="w-full h-full rounded-[32px] overflow-hidden bg-white shadow-[0_40px_100px_rgba(0,0,0,0.3)] ring-1 ring-white/10 flex items-center justify-center relative"
+                animate={{ 
+                   opacity: 1, 
+                   scale: zoom,
+                   transition: { type: "spring", stiffness: 300, damping: 30 }
+                }}
+                className={`w-full h-full rounded-[32px] overflow-hidden bg-white shadow-[0_40px_100px_rgba(0,0,0,0.3)] ring-1 ring-white/10 flex items-center justify-center relative ${zoom > 1 ? 'cursor-grab active:cursor-grabbing' : ''}`}
              >
                 {selectedDoc && (
                    selectedDoc.toLowerCase().endsWith('.pdf') ? (
-                     <iframe src={selectedDoc} className="w-full h-full border-none shadow-2xl" />
+                     <iframe 
+                       src={data.isOwner ? selectedDoc : `${selectedDoc}#toolbar=0&navpanes=0&scrollbar=0`} 
+                       className="w-full h-full border-none shadow-2xl" 
+                     />
                    ) : (
-                     <img src={selectedDoc} className="w-max h-max max-w-full max-h-full object-contain p-4" alt="Cinematic Document Preview" />
+                     <div className="relative w-full h-full flex items-center justify-center p-4">
+                        <img src={selectedDoc} className="w-max h-max max-w-full max-h-full object-contain" alt="Cinematic Document Preview" />
+                        {!data.isOwner && (
+                           <div 
+                              className="absolute inset-0 z-50 bg-transparent select-none" 
+                              onContextMenu={(e) => e.preventDefault()}
+                           />
+                        )}
+                     </div>
                    )
                 )}
                 {/* Subtle light effect over image */}
@@ -242,13 +304,22 @@ export default function CaseDetailsPage({ params }: { params: Promise<{ id: stri
                 </div>
                 
                 <div className="flex items-center gap-3 w-full md:w-auto">
-                   <Button 
-                      variant="outline" 
-                      className="flex-grow md:flex-grow-0 h-14 px-8 rounded-2xl bg-emerald-600 hover:bg-emerald-500 border-none text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-900/40 transition-all hover:-translate-y-0.5"
-                      onClick={() => window.open(selectedDoc!, '_blank')}
-                   >
-                      <Maximize2 className="w-4 h-4 mr-2" /> View Original File
-                   </Button>
+                   {data.isOwner ? (
+                      <Button 
+                         variant="outline" 
+                         className="flex-grow md:flex-grow-0 h-14 px-8 rounded-2xl bg-emerald-600 hover:bg-emerald-500 border-none text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-900/40 transition-all hover:-translate-y-0.5"
+                         onClick={() => window.open(selectedDoc!, '_blank')}
+                      >
+                         <Maximize2 className="w-4 h-4 mr-2" /> View Original File
+                      </Button>
+                   ) : (
+                      <div className="flex flex-col items-end">
+                         <Badge variant="outline" className="h-10 px-4 rounded-xl bg-white/5 border-white/10 text-white/60 font-black uppercase tracking-widest flex gap-2">
+                             <LockIcon className="w-3 h-3" /> View Only Access
+                         </Badge>
+                         <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest mt-2 px-1">Source Download Restricted</p>
+                      </div>
+                   )}
                 </div>
              </div>
           </div>
@@ -459,8 +530,8 @@ export default function CaseDetailsPage({ params }: { params: Promise<{ id: stri
                   </div>
 
                   <div className="space-y-4">
-                     <button className="w-full h-16 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xl shadow-xl shadow-emerald-900/10 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
-                        Help {data.patientName.split(" ")[0]} Now <Heart className="w-5 h-5 fill-white" />
+                     <button className="w-full h-16 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-base shadow-xl shadow-emerald-900/10 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                        Help {data.patientName} Now <Heart className="w-5 h-5 fill-white" />
                      </button>
                      <p className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest flex items-center justify-center gap-1.5">
                         <LockIcon className="w-3 h-3" /> Secure Payment via Razorpay
@@ -491,15 +562,6 @@ export default function CaseDetailsPage({ params }: { params: Promise<{ id: stri
                </CardContent>
             </Card>
 
-            <div className="mt-8 p-8 rounded-[40px] bg-slate-900 text-white flex items-center justify-between group cursor-pointer hover:bg-emerald-600 transition-all duration-300 shadow-xl">
-               <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
-                     <HeartPulse className="w-5 h-5 text-emerald-500 group-hover:text-white" />
-                  </div>
-                  <p className="font-bold text-sm">Become a Monthly Donor</p>
-               </div>
-               <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-white transition-transform group-hover:translate-x-1" />
-            </div>
           </div>
 
         </div>

@@ -100,13 +100,16 @@ export const getMyCases = async (req: any, res: Response) => {
 // @desc    Get single case
 // @route   GET /api/cases/:id
 // @access  Public
-export const getCase = async (req: Request, res: Response) => {
+export const getCase = async (req: any, res: Response) => {
   try {
     const caseData = await Case.findById(req.params.id).populate('createdBy', 'name email');
     if (!caseData) {
       return res.status(404).json({ success: false, message: 'Case not found' });
     }
-    res.status(200).json({ success: true, case: caseData });
+
+    const isOwner = req.user ? (caseData.createdBy._id.toString() === req.user._id.toString() || req.user.role === 'admin') : false;
+
+    res.status(200).json({ success: true, case: caseData, isOwner });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }

@@ -30,3 +30,23 @@ export const authorize = (...roles: string[]) => {
     next();
   };
 };
+
+export const optionalProtect = async (req: any, res: Response, next: NextFunction) => {
+  let token;
+
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    req.user = await User.findById(decoded.id);
+    next();
+  } catch (err: any) {
+    next();
+  }
+};
