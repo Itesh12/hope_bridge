@@ -66,6 +66,18 @@ export const getCases = async (req: Request, res: Response) => {
   }
 };
 
+// @desc    Get current user's cases
+// @route   GET /api/cases/my
+// @access  Private
+export const getMyCases = async (req: any, res: Response) => {
+  try {
+    const cases = await Case.find({ createdBy: req.user.id }).sort({ createdAt: -1 });
+    res.status(200).json({ success: true, count: cases.length, cases });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // @desc    Get single case
 // @route   GET /api/cases/:id
 // @access  Public
@@ -96,12 +108,36 @@ export const updateCase = async (req: any, res: Response) => {
       return res.status(401).json({ success: false, message: 'Not authorized to update this case' });
     }
 
-    caseData = await Case.findByIdAndUpdate(req.params.id, req.body, {
+    const updateFields = { ...req.body };
+
+    // Parse helpType if it comes as a string
+    if (typeof updateFields.helpType === 'string') {
+      try {
+        updateFields.helpType = JSON.parse(updateFields.helpType);
+      } catch (e) {
+        updateFields.helpType = [updateFields.helpType];
+      }
+    }
+
+    // Handle file uploads if any
+    if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+      const documentUrls: string[] = [];
+      for (const file of req.files) {
+        const result: any = await uploadToCloudinary(file.buffer, 'hopebridge/cases');
+        documentUrls.push(result.secure_url);
+      }
+      updateFields.documents = [...(caseData.documents || []), ...documentUrls].slice(-5); // Keep last 5
+    }
+
+    // Reset status to pending upon update
+    updateFields.verificationStatus = 'pending';
+
+    const updatedCase = await Case.findByIdAndUpdate(req.params.id, updateFields, {
       new: true,
       runValidators: true,
     });
 
-    res.status(200).json({ success: true, case: caseData });
+    res.status(200).json({ success: true, case: updatedCase });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
