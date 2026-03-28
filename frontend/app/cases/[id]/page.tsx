@@ -181,15 +181,7 @@ export default function CaseDetailsPage({ params }: { params: Promise<{ id: stri
       {/* ── DOCUMENT VIEWER DIALOG ── */}
       <Dialog open={!!selectedDoc} onOpenChange={(open: boolean) => !open && setSelectedDoc(null)}>
         <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-full p-0 overflow-hidden border-none bg-black/95 backdrop-blur-2xl rounded-[40px]">
-          <div className="absolute top-6 right-6 z-50 flex items-center gap-2">
-             <Button 
-                variant="outline" 
-                size="icon" 
-                className="w-12 h-12 rounded-2xl bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/40 transition-all"
-                onClick={() => window.open(selectedDoc!, '_blank')}
-             >
-                <Maximize2 className="w-5 h-5" />
-             </Button>
+          <div className="absolute top-6 right-6 z-50">
              <DialogClose 
                render={
                  <Button 
@@ -205,10 +197,12 @@ export default function CaseDetailsPage({ params }: { params: Promise<{ id: stri
           
           <div className="w-full h-full flex flex-col pt-20 pb-10 px-10">
              <div className="flex-grow rounded-[32px] overflow-hidden bg-white shadow-2xl relative">
-                {selectedDoc?.toLowerCase().endsWith('.pdf') ? (
-                  <iframe src={selectedDoc} className="w-full h-full border-none" />
-                ) : (
-                  <img src={selectedDoc || ''} className="w-full h-full object-contain" alt="Document Preview" />
+                {selectedDoc && (
+                   selectedDoc.toLowerCase().endsWith('.pdf') ? (
+                     <iframe src={selectedDoc} className="w-full h-full border-none" />
+                   ) : (
+                     <img src={selectedDoc} className="w-full h-full object-contain" alt="Document Preview" />
+                   )
                 )}
              </div>
              <div className="mt-8 flex justify-between items-center px-4">

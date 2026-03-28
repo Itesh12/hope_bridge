@@ -455,8 +455,8 @@ export default function ProfilePage() {
                     >
                       <Link href={`/cases/${c._id}`} className="flex flex-col md:flex-row items-center gap-8 flex-grow">
                         <div className="w-24 h-24 rounded-full bg-slate-50 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform overflow-hidden relative border-4 border-white shadow-lg">
-                          {c.documents && c.documents[0] ? (
-                            <img src={c.documents[0]} className="w-full h-full object-cover" alt="Case preview" />
+                          {c.patientImage || c.coverImage || (c.documents && c.documents[0]) ? (
+                            <img src={c.patientImage || c.coverImage || c.documents[0]} className="w-full h-full object-cover" alt="Case preview" />
                           ) : (
                             <Activity className="w-10 h-10 text-slate-200" />
                           )}
