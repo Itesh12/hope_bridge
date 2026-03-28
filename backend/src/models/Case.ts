@@ -1,0 +1,56 @@
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface ICase extends Document {
+  createdBy: mongoose.Types.ObjectId;
+  patientName: string;
+  age: number;
+  location: string;
+  disease: string;
+  category: 'Cancer' | 'Accident' | 'Pediatric' | 'Transplant' | 'Cardiac' | 'Other';
+  hospitalName: string;
+  treatmentNeeded: string;
+  description: string;
+  headline: string;
+  targetAmount: number;
+  raisedAmount: number;
+  helpType: ('fund' | 'blood' | 'marrow')[];
+  documents: string[]; // URLs up to 5
+  verificationStatus: 'pending' | 'approved' | 'rejected';
+  isUrgent: boolean;
+  isVerified: boolean;
+  createdAt: Date;
+}
+
+const CaseSchema: Schema = new Schema({
+  createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  patientName: { type: String, required: true },
+  age: { type: Number, required: true },
+  location: { type: String, required: true },
+  disease: { type: String, required: true },
+  category: { 
+    type: String, 
+    enum: ['Cancer', 'Accident', 'Pediatric', 'Transplant', 'Cardiac', 'Other'], 
+    default: 'Other',
+    required: true 
+  },
+  hospitalName: { type: String, required: true },
+  treatmentNeeded: { type: String, required: true },
+  description: { type: String, required: true },
+  headline: { type: String, required: true },
+  targetAmount: { type: Number, required: true },
+  raisedAmount: { type: Number, default: 0 },
+  helpType: [{ type: String, enum: ['fund', 'blood', 'marrow'], default: ['fund'] }],
+  documents: {
+    type: [String],
+    validate: [
+      (val: string[]) => val.length <= 5,
+      '{PATH} exceeds the limit of 5'
+    ]
+  },
+  verificationStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+  isUrgent: { type: Boolean, default: false },
+  isVerified: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
+});
+
+export default mongoose.model<ICase>('Case', CaseSchema);
