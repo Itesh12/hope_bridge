@@ -13,13 +13,21 @@ router.get('/:id', getCase);
 router.post('/', 
   protect, 
   authorize('patient', 'admin'), 
-  upload.array('documents', 5), 
+  upload.fields([
+    { name: 'documents', maxCount: 5 },
+    { name: 'patientImage', maxCount: 1 },
+    { name: 'coverImage', maxCount: 1 }
+  ]), 
   validateRequest(createCaseSchema), 
   createCase
 );
 router.put('/:id', 
   protect, 
-  upload.array('documents', 5), 
+  upload.fields([
+    { name: 'documents', maxCount: 5 },
+    { name: 'patientImage', maxCount: 1 },
+    { name: 'coverImage', maxCount: 1 }
+  ]), 
   validateRequest(createCaseSchema), 
   updateCase
 );

@@ -15,6 +15,8 @@ export interface ICase extends Document {
   raisedAmount: number;
   helpType: ('fund' | 'blood' | 'marrow' | 'other')[];
   otherHelpDetail?: string;
+  patientImage?: string;
+  coverImage?: string;
   documents: string[]; // URLs up to 5
   verificationStatus: 'pending' | 'approved' | 'rejected';
   isUrgent: boolean;
@@ -42,6 +44,8 @@ const CaseSchema: Schema = new Schema({
   raisedAmount: { type: Number, default: 0 },
   helpType: [{ type: String, enum: ['fund', 'blood', 'marrow', 'other'], default: ['fund'] }],
   otherHelpDetail: { type: String },
+  patientImage: { type: String },
+  coverImage: { type: String },
   documents: {
     type: [String],
     validate: [

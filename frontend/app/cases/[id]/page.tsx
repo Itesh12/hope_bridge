@@ -23,8 +23,17 @@ import {
   Activity,
   Droplets,
   HeartPulse,
-  Lock as LockIcon
+  Lock as LockIcon,
+  X,
+  Maximize2
 } from "lucide-react";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle,
+  DialogClose
+} from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,6 +65,9 @@ interface ICaseDetail {
   hospitalName: string;
   donorsCount: number;
   updates: ICaseUpdate[];
+  patientImage?: string;
+  coverImage?: string;
+  documents: string[];
 }
 
 // --- Mock Data Finder (Matches Cases Listing) ---
@@ -79,6 +91,7 @@ const ALL_CASES: ICaseDetail[] = [
     description: "Rahul is a bright 8-year-old suffering from a complex heart defect. He requires urgent open-heart surgery to survive. His father is a daily wage laborer and cannot afford the astronomical hospital costs. AIIMS has fast-tracked his case, but we need the funds by next week.",
     hospitalName: "AIIMS (All India Institute of Medical Sciences)",
     donorsCount: 124,
+    documents: ["https://images.unsplash.com/photo-1559757148-5c350d0d3c56?auto=format&fit=crop&q=80&w=1200"],
     updates: [
       { date: "Oct 24, 2023", title: "Hospital Admission", content: "Rahul has been admitted to the pediatric cardiac ward." },
       { date: "Oct 20, 2023", title: "Campaign Launched", content: "We started the fundraising campaign today." }
@@ -123,11 +136,14 @@ export default function CaseDetailsPage({ params }: { params: Promise<{ id: stri
           isVerified: c.isVerified,
           helpType: c.helpType,
           image: c.documents?.[0] || "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?auto=format&fit=crop&q=80&w=1200",
-          daysLeft: 15, // Fallback for now
+          daysLeft: 15,
           description: c.description,
           hospitalName: c.hospitalName,
           donorsCount: 0,
-          updates: []
+          updates: [],
+          patientImage: c.patientImage,
+          coverImage: c.coverImage,
+          documents: c.documents || []
         });
       } catch (err: any) {
         console.error("Failed to fetch case:", err);
@@ -157,9 +173,53 @@ export default function CaseDetailsPage({ params }: { params: Promise<{ id: stri
   );
 
   const pct = Math.round((data.raisedAmount / data.targetAmount) * 100);
+  const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen bg-slate-50/50">
+      
+      {/* ── DOCUMENT VIEWER DIALOG ── */}
+      <Dialog open={!!selectedDoc} onOpenChange={(open: boolean) => !open && setSelectedDoc(null)}>
+        <DialogContent className="max-w-[95vw] w-full max-h-[95vh] h-full p-0 overflow-hidden border-none bg-black/95 backdrop-blur-2xl rounded-[40px]">
+          <div className="absolute top-6 right-6 z-50 flex items-center gap-2">
+             <Button 
+                variant="outline" 
+                size="icon" 
+                className="w-12 h-12 rounded-2xl bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/40 transition-all"
+                onClick={() => window.open(selectedDoc!, '_blank')}
+             >
+                <Maximize2 className="w-5 h-5" />
+             </Button>
+             <DialogClose asChild>
+                <Button variant="outline" size="icon" className="w-12 h-12 rounded-2xl bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/40 transition-all">
+                   <X className="w-5 h-5" />
+                </Button>
+             </DialogClose>
+          </div>
+          
+          <div className="w-full h-full flex flex-col pt-20 pb-10 px-10">
+             <div className="flex-grow rounded-[32px] overflow-hidden bg-white shadow-2xl relative">
+                {selectedDoc?.toLowerCase().endsWith('.pdf') ? (
+                  <iframe src={selectedDoc} className="w-full h-full border-none" />
+                ) : (
+                  <img src={selectedDoc || ''} className="w-full h-full object-contain" alt="Document Preview" />
+                )}
+             </div>
+             <div className="mt-8 flex justify-between items-center px-4">
+                <div>
+                   <h3 className="text-xl font-black text-white mb-1 uppercase tracking-tight">Verified Medical Document</h3>
+                   <p className="text-white/40 text-xs font-black uppercase tracking-widest">Case ID: {caseId?.slice(-8)} · Secure Hospital Attachment</p>
+                </div>
+                <Button 
+                   className="h-14 px-8 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-widest transition-all"
+                   onClick={() => window.open(selectedDoc!, '_blank')}
+                >
+                   View Full Screen
+                </Button>
+             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       
       {/* ── TOP NAVIGATION ── */}
       <div className="fixed top-20 left-0 w-full bg-white/80 backdrop-blur-xl border-b border-slate-100 z-40 transition-all">
@@ -204,8 +264,12 @@ export default function CaseDetailsPage({ params }: { params: Promise<{ id: stri
               
               <div className="flex items-center gap-6">
                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center font-black text-slate-600 text-lg">
-                       {data.patientName[0]}
+                    <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center font-black text-slate-600 text-lg overflow-hidden border-2 border-white shadow-md">
+                       {data.patientImage ? (
+                         <img src={data.patientImage} className="w-full h-full object-cover" alt={data.patientName} />
+                       ) : (
+                         data.patientName[0]
+                       )}
                     </div>
                     <div>
                        <p className="text-sm font-black text-slate-900">{data.patientName}</p>
@@ -227,7 +291,7 @@ export default function CaseDetailsPage({ params }: { params: Promise<{ id: stri
                className="relative aspect-video rounded-[40px] overflow-hidden shadow-2xl shadow-slate-200 border-8 border-white"
             >
                <img 
-                  src={data.image} 
+                  src={data.coverImage || data.image} 
                   className="w-full h-full object-cover" 
                   alt={data.headline} 
                />
@@ -280,21 +344,34 @@ export default function CaseDetailsPage({ params }: { params: Promise<{ id: stri
                </div>
             </div>
 
-            {/* Documentation Placeholder */}
-            <div className="p-8 rounded-[32px] border-2 border-dashed border-slate-200 bg-white group hover:border-emerald-200 transition-colors">
-               <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                     <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-emerald-600 transition-colors">
-                        <FileText className="w-6 h-6" />
-                     </div>
-                     <div>
-                        <p className="font-black text-slate-900">Hospital Admission Summary</p>
-                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Verified Attachment · PDF</p>
-                     </div>
-                  </div>
-                  <button className="h-10 px-4 rounded-xl text-slate-400 hover:text-emerald-600 flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-colors">
-                     View Document <ArrowRight className="w-3 h-3" />
-                  </button>
+            {/* Documentation Section */}
+            <div className="space-y-6">
+               <h3 className="text-3xl font-black text-slate-900 tracking-tight">Medical Verification</h3>
+               <div className="grid grid-cols-1 gap-4">
+                  {data.documents.map((doc, idx) => (
+                    <div 
+                      key={idx}
+                      className="p-8 rounded-[32px] border-2 border-dashed border-slate-200 bg-white group hover:border-emerald-200 transition-all hover:shadow-xl hover:shadow-emerald-900/5"
+                    >
+                       <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                             <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-emerald-600 transition-colors">
+                                <FileText className="w-6 h-6" />
+                             </div>
+                             <div>
+                                <p className="font-black text-slate-900">Verified Medical Document {idx + 1}</p>
+                                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Secure Attachment · Ref: {caseId?.slice(-6).toUpperCase()}</p>
+                             </div>
+                          </div>
+                          <button 
+                            onClick={() => setSelectedDoc(doc)}
+                            className="h-10 px-4 rounded-xl text-slate-400 hover:text-emerald-600 flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-colors border border-transparent hover:border-emerald-100"
+                          >
+                             View Document <ArrowRight className="w-3 h-3" />
+                          </button>
+                       </div>
+                    </div>
+                  ))}
                </div>
             </div>
 
@@ -349,7 +426,7 @@ export default function CaseDetailsPage({ params }: { params: Promise<{ id: stri
 
                   <div className="space-y-4">
                      <button className="w-full h-16 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xl shadow-xl shadow-emerald-900/10 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
-                        Help Rahul Now <Heart className="w-5 h-5 fill-white" />
+                        Help {data.patientName.split(" ")[0]} Now <Heart className="w-5 h-5 fill-white" />
                      </button>
                      <p className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest flex items-center justify-center gap-1.5">
                         <LockIcon className="w-3 h-3" /> Secure Payment via Razorpay

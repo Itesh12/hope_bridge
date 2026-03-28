@@ -14,6 +14,9 @@ export const createCaseSchema = z.object({
   helpType: z.array(z.enum(['fund', 'blood', 'marrow', 'other'])).min(1, "Select at least one help type"),
   otherHelpDetail: z.string().optional(),
   isUrgent: z.boolean().default(false),
+  documents: z.array(z.any()).optional(),
+  patientImage: z.any().optional(),
+  coverImage: z.any().optional(),
 }).superRefine((data, ctx) => {
   if (data.helpType.includes('fund') && (!data.targetAmount || data.targetAmount <= 0)) {
     ctx.addIssue({

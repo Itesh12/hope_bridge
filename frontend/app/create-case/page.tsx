@@ -12,9 +12,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Activity, AlertCircle, ArrowLeft, ArrowRight, Calendar, CheckCircle2, Clock, FileText, Heart, IndianRupee, MapPin, ShieldCheck, Stethoscope, UploadCloud, X, Zap, Loader2 } from "lucide-react";
+import { Activity, AlertCircle, ArrowLeft, ArrowRight, Calendar, CheckCircle2, Clock, FileText, Heart, IndianRupee, MapPin, ShieldCheck, Stethoscope, UploadCloud, X, Zap, Loader2, User } from "lucide-react";
 import { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { cn } from "@/lib/utils";
 
 const steps = [
   { id: 1, title: "Patient", icon: Heart, description: "Basic identity" },
@@ -50,6 +51,10 @@ function CreateCaseContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [patientFile, setPatientFile] = useState<File | null>(null);
+  const [patientPreview, setPatientPreview] = useState<string | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [canSubmit, setCanSubmit] = useState(false);
@@ -66,14 +71,13 @@ function CreateCaseContent() {
     }
   }, [user, loading, router]);
 
-  // Clear errors and manage submission safety when navigating between steps
   useEffect(() => {
     setErrorMessage(null);
     setSuccessMessage(null);
     setCanSubmit(false);
     
     if (currentStep === 4) {
-      const timer = setTimeout(() => setCanSubmit(true), 1000); // 1 second safety delay
+      const timer = setTimeout(() => setCanSubmit(true), 1000);
       return () => clearTimeout(timer);
     }
   }, [currentStep]);
@@ -120,6 +124,8 @@ function CreateCaseContent() {
           if (c.documents && c.documents.length > 0) {
             setPreviews(c.documents);
           }
+          if (c.patientImage) setPatientPreview(c.patientImage);
+          if (c.coverImage) setCoverPreview(c.coverImage);
         } catch (err) {
           console.error("Failed to fetch case for editing:", err);
           setErrorMessage("Failed to load case data. Please try again.");
@@ -132,7 +138,6 @@ function CreateCaseContent() {
   }, [caseId, reset]);
 
   const selectedCategory = watch('category');
-  const selectedHelpType = watch('helpType') || [];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
@@ -145,8 +150,26 @@ function CreateCaseContent() {
     setFiles(newFiles);
 
     const newPreviews = selectedFiles.map(file => URL.createObjectURL(file));
-    setPreviews(prev => [...prev, ...newPreviews]);
+    setPreviews((prev) => [...prev, ...newPreviews]);
     setErrorMessage(null);
+  };
+
+  const handlePatientImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPatientFile(file);
+      setPatientPreview(URL.createObjectURL(file));
+      setValue('patientImage', [file] as any);
+    }
+  };
+
+  const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCoverFile(file);
+      setCoverPreview(URL.createObjectURL(file));
+      setValue('coverImage', [file] as any);
+    }
   };
 
   const removeFile = (index: number) => {
@@ -161,7 +184,7 @@ function CreateCaseContent() {
   };
 
   const onSubmit = async (data: any) => {
-    if (currentStep < 4 || !canSubmit) return; // Prevent accidental submissions
+    if (currentStep < 4 || !canSubmit) return;
     setIsSubmitting(true);
     setErrorMessage(null);
     try {
@@ -174,7 +197,13 @@ function CreateCaseContent() {
         }
       });
 
-      // Add files
+      if (data.patientImage && data.patientImage[0]) {
+        formData.append('patientImage', data.patientImage[0]);
+      }
+      if (data.coverImage && data.coverImage[0]) {
+        formData.append('coverImage', data.coverImage[0]);
+      }
+
       files.forEach(file => {
         formData.append('documents', file);
       });
@@ -219,7 +248,6 @@ function CreateCaseContent() {
     <div className="min-h-screen bg-[#fafafa] pt-32 pb-20 px-6">
       <div className="max-w-4xl mx-auto">
         
-        {/* Header section with progress indicator */}
         <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-100/60 border border-emerald-200 text-emerald-700 text-xs font-black mb-4 uppercase tracking-widest">
@@ -243,7 +271,6 @@ function CreateCaseContent() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           
-          {/* Left Column: Vertical Stepper Navigation (Desktop) */}
           <div className="hidden lg:block lg:col-span-4 space-y-4">
              {steps.map((step) => {
                const isActive = currentStep === step.id;
@@ -284,7 +311,6 @@ function CreateCaseContent() {
              })}
           </div>
 
-          {/* Right Column: Dynamic Form Area */}
           <div className="lg:col-span-8">
             {initialLoading ? (
                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[40px] shadow-xl">
@@ -309,19 +335,82 @@ function CreateCaseContent() {
                           <p className="text-sm text-slate-500 font-medium">Initial data about the person in need of support.</p>
                         </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-2">
-                            <Label htmlFor="patientName" className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Patient Full Name</Label>
-                            <div className="relative">
-                              <Heart className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
-                              <Input 
-                                {...register('patientName')}
-                                placeholder="Rahul Sharma" 
-                                className="h-14 pl-12 rounded-2xl bg-slate-50 border-transparent focus:bg-white focus:ring-2 focus:ring-emerald-500 transition-all font-bold" 
-                              />
-                            </div>
-                            {errors.patientName && <p className="text-xs text-red-500 font-bold ml-2">{errors.patientName.message}</p>}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                          <div className={cn("space-y-4 pt-4 md:col-span-1")}>
+                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 mb-1">
+                                Patient Portrait <span className="text-emerald-500">*</span>
+                             </label>
+                             <div 
+                                onClick={() => document.getElementById('patient-upload')?.click()}
+                                className="relative aspect-square rounded-[32px] border-2 border-dashed border-slate-200 bg-slate-50/30 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-200 hover:bg-emerald-50/30 transition-all overflow-hidden group"
+                             >
+                                {patientPreview ? (
+                                  <img src={patientPreview} className="w-full h-full object-cover" alt="Patient" />
+                                ) : (
+                                  <>
+                                    <div className="w-12 h-12 rounded-2xl bg-white shadow-lg flex items-center justify-center text-slate-400 group-hover:scale-110 group-hover:text-emerald-600 transition-all">
+                                      <User className="w-6 h-6" />
+                                    </div>
+                                    <p className="mt-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Upload Photo</p>
+                                  </>
+                                )}
+                                <input 
+                                  id="patient-upload" 
+                                  type="file" 
+                                  className="hidden" 
+                                  accept="image/*" 
+                                  onChange={handlePatientImageChange}
+                                />
+                             </div>
                           </div>
+
+                          <div className={cn("space-y-4 pt-4 md:col-span-1")}>
+                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 mb-1">
+                                Case Banner / Cover <span className="text-emerald-500">*</span>
+                             </label>
+                             <div 
+                                onClick={() => document.getElementById('cover-upload')?.click()}
+                                className="relative aspect-square rounded-[32px] border-2 border-dashed border-slate-200 bg-slate-50/30 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-200 hover:bg-emerald-50/30 transition-all overflow-hidden group"
+                             >
+                                {coverPreview ? (
+                                  <img src={coverPreview} className="w-full h-full object-cover" alt="Cover" />
+                                ) : (
+                                  <>
+                                    <div className="w-12 h-12 rounded-2xl bg-white shadow-lg flex items-center justify-center text-slate-400 group-hover:scale-110 group-hover:text-emerald-600 transition-all">
+                                      <Zap className="w-6 h-6" />
+                                    </div>
+                                    <p className="mt-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Upload Banner</p>
+                                  </>
+                                )}
+                                <input 
+                                  id="cover-upload" 
+                                  type="file" 
+                                  className="hidden" 
+                                  accept="image/*" 
+                                  onChange={handleCoverImageChange}
+                                />
+                             </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 mb-1">
+                            Patient Full Name <span className="text-emerald-500">*</span>
+                          </label>
+                          <div className="relative group">
+                            <div className="absolute left-5 top-1/2 -translate-y-1/2 transition-colors text-slate-300 group-focus-within:text-emerald-600">
+                              <User className="w-5 h-5" />
+                            </div>
+                            <input
+                              {...register('patientName')}
+                              placeholder="e.g. John Doe"
+                              className="w-full h-14 pl-14 pr-5 rounded-2xl border-2 border-slate-100 bg-slate-50/50 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all font-bold text-slate-900 placeholder:text-slate-300 placeholder:font-medium"
+                            />
+                          </div>
+                          {errors.patientName && <p className="text-rose-500 text-[10px] font-black uppercase tracking-widest ml-1">{errors.patientName.message as string}</p>}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-2">
                             <Label htmlFor="age" className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Patient Age</Label>
                             <Input 

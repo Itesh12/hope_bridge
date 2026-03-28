@@ -21,20 +21,39 @@ export const createCase = async (req: any, res: Response) => {
       }
     }
 
-    // Handle multiple document uploads
+    // Handle named file uploads
     const documentUrls: string[] = [];
-    if (req.files && Array.isArray(req.files)) {
-      console.log(`>> UPLOADING: ${req.files.length} documents to Cloudinary`);
-      
-      for (const file of req.files) {
-        const result: any = await uploadToCloudinary(file.buffer, 'hopebridge/cases');
-        documentUrls.push(result.secure_url);
+    let patientImageUrl = '';
+    let coverImageUrl = '';
+
+    if (req.files) {
+      const files = req.files as { [fieldname: string]: any[] };
+
+      // Upload patientImage
+      if (files.patientImage && files.patientImage[0]) {
+        const result: any = await uploadToCloudinary(files.patientImage[0].buffer, 'hopebridge/patients');
+        patientImageUrl = result.secure_url;
       }
-      console.log('>> SUCCESS: All documents uploaded');
+
+      // Upload coverImage
+      if (files.coverImage && files.coverImage[0]) {
+        const result: any = await uploadToCloudinary(files.coverImage[0].buffer, 'hopebridge/covers');
+        coverImageUrl = result.secure_url;
+      }
+
+      // Upload documents
+      if (files.documents) {
+        for (const file of files.documents) {
+          const result: any = await uploadToCloudinary(file.buffer, 'hopebridge/docs');
+          documentUrls.push(result.secure_url);
+        }
+      }
     }
 
     const newCase = await Case.create({
       ...caseData,
+      patientImage: patientImageUrl,
+      coverImage: coverImageUrl,
       documents: documentUrls,
       createdBy: req.user.id,
     });
@@ -120,13 +139,30 @@ export const updateCase = async (req: any, res: Response) => {
     }
 
     // Handle file uploads if any
-    if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-      const documentUrls: string[] = [];
-      for (const file of req.files) {
-        const result: any = await uploadToCloudinary(file.buffer, 'hopebridge/cases');
-        documentUrls.push(result.secure_url);
+    if (req.files) {
+      const files = req.files as { [fieldname: string]: any[] };
+
+      // Upload patientImage
+      if (files.patientImage && files.patientImage[0]) {
+        const result: any = await uploadToCloudinary(files.patientImage[0].buffer, 'hopebridge/patients');
+        updateFields.patientImage = result.secure_url;
       }
-      updateFields.documents = [...(caseData.documents || []), ...documentUrls].slice(-5); // Keep last 5
+
+      // Upload coverImage
+      if (files.coverImage && files.coverImage[0]) {
+        const result: any = await uploadToCloudinary(files.coverImage[0].buffer, 'hopebridge/covers');
+        updateFields.coverImage = result.secure_url;
+      }
+
+      // Upload documents
+      if (files.documents && files.documents.length > 0) {
+        const documentUrls: string[] = [];
+        for (const file of files.documents) {
+          const result: any = await uploadToCloudinary(file.buffer, 'hopebridge/docs');
+          documentUrls.push(result.secure_url);
+        }
+        updateFields.documents = [...(caseData.documents || []), ...documentUrls].slice(-5);
+      }
     }
 
     // Reset status to pending upon update
