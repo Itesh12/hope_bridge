@@ -33,8 +33,12 @@ export default function LoginPage() {
     setIsLoading(true);
     setServerError(null);
     try {
-      await login(data);
-      router.push("/cases");
+      const res = await login(data);
+      if (res.user.role === 'admin') {
+        router.push("/admin");
+      } else {
+        router.push("/cases");
+      }
     } catch (err: any) {
       if (err.response?.status === 400 && err.response.data.errors) {
         err.response.data.errors.forEach((e: any) => {

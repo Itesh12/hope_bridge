@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { HeartPulse, User as UserIcon, LogOut, LayoutDashboard, PlusCircle, ChevronDown } from "lucide-react";
+import { HeartPulse, User as UserIcon, LogOut, LayoutDashboard, PlusCircle, ChevronDown, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -104,8 +104,18 @@ export function Navbar() {
                           className="flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-slate-50 transition-colors text-slate-600 font-bold text-sm group"
                         >
                           <LayoutDashboard className="w-4 h-4 group-hover:text-emerald-600 transition-colors" />
-                          Dashboard
+                          Explore Cases
                         </Link>
+                        {user.role === 'admin' && (
+                          <Link 
+                            href="/admin" 
+                            onClick={() => setIsMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-emerald-50 text-emerald-700 font-black text-sm group"
+                          >
+                            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                            Admin Panel
+                          </Link>
+                        )}
                         <Link 
                           href="/profile" 
                           onClick={() => setIsMenuOpen(false)}

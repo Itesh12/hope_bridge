@@ -106,10 +106,15 @@ export const getCase = async (req: any, res: Response) => {
       return res.status(404).json({ success: false, message: 'Case not found' });
     }
 
-    const isOwner = req.user ? (caseData.createdBy._id.toString() === req.user._id.toString() || req.user.role === 'admin') : false;
+    // Safe comparison of IDs
+    const createdById = caseData.createdBy?._id?.toString() || (caseData.createdBy as any).toString();
+    const userId = req.user?._id?.toString() || req.user?.id;
+    
+    const isOwner = req.user ? (createdById === userId || req.user.role === 'admin') : false;
 
     res.status(200).json({ success: true, case: caseData, isOwner });
   } catch (error: any) {
+    console.error('XX ERROR in getCase:', error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };
