@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,164 +15,9 @@ import {
   Droplets,
   Activity,
   X,
+  Loader2,
 } from "lucide-react";
-
-// ── Mock data aligned with the Case model ──────────────────────────────────
-const ALL_CASES = [
-  {
-    id: 1,
-    headline: "Support Rahul's Urgent Heart Surgery",
-    patientName: "Rahul Sharma",
-    age: 8,
-    location: "AIIMS, New Delhi",
-    disease: "Congenital Heart Disease",
-    treatmentNeeded: "Open-heart surgery",
-    raisedAmount: 450000,
-    targetAmount: 600000,
-    category: "Surgery",
-    isUrgent: true,
-    isVerified: true,
-    helpType: ["fund"],
-    image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?auto=format&fit=crop&q=80&w=800",
-    daysLeft: 5,
-  },
-  {
-    id: 2,
-    headline: "Help Meera Fight Rare Bone Cancer",
-    patientName: "Meera Reddy",
-    age: 24,
-    location: "Tata Memorial, Mumbai",
-    disease: "Osteosarcoma",
-    treatmentNeeded: "Chemotherapy + Surgery",
-    raisedAmount: 1200000,
-    targetAmount: 2500000,
-    category: "Cancer",
-    isUrgent: false,
-    isVerified: true,
-    helpType: ["fund", "marrow"],
-    image: "https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&q=80&w=800",
-    daysLeft: 18,
-  },
-  {
-    id: 3,
-    headline: "Emergency Care for Accident Recovery",
-    patientName: "Amit Singh",
-    age: 32,
-    location: "Apollo, Hyderabad",
-    disease: "Multiple Fractures & Internal Bleeding",
-    treatmentNeeded: "ICU + Reconstructive Surgery",
-    raisedAmount: 200000,
-    targetAmount: 300000,
-    category: "Emergency",
-    isUrgent: true,
-    isVerified: true,
-    helpType: ["fund", "blood"],
-    image: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=800",
-    daysLeft: 2,
-  },
-  {
-    id: 4,
-    headline: "Support Lakshmi's Kidney Transplant",
-    patientName: "Lakshmi Nair",
-    age: 45,
-    location: "Manipal Hospital, Bangalore",
-    disease: "End-Stage Renal Disease",
-    treatmentNeeded: "Kidney Transplant",
-    raisedAmount: 800000,
-    targetAmount: 1800000,
-    category: "Transplant",
-    isUrgent: false,
-    isVerified: true,
-    helpType: ["fund"],
-    image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=800",
-    daysLeft: 25,
-  },
-  {
-    id: 5,
-    headline: "Baby Aryan Needs Rare Blood Disorder Treatment",
-    patientName: "Aryan Mehta",
-    age: 2,
-    location: "KEM Hospital, Mumbai",
-    disease: "Thalassemia Major",
-    treatmentNeeded: "Bone Marrow Transplant",
-    raisedAmount: 550000,
-    targetAmount: 1200000,
-    category: "Rare Disease",
-    isUrgent: true,
-    isVerified: true,
-    helpType: ["fund", "marrow"],
-    image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=800",
-    daysLeft: 7,
-  },
-  {
-    id: 6,
-    headline: "Priya Needs Spinal Surgery After Fall",
-    patientName: "Priya Joshi",
-    age: 38,
-    location: "Fortis, Pune",
-    disease: "Lumbar Spinal Stenosis",
-    treatmentNeeded: "Spinal Decompression Surgery",
-    raisedAmount: 180000,
-    targetAmount: 450000,
-    category: "Surgery",
-    isUrgent: false,
-    isVerified: true,
-    helpType: ["fund"],
-    image: "https://images.unsplash.com/photo-1530026405186-ed1f139313f8?auto=format&fit=crop&q=80&w=800",
-    daysLeft: 30,
-  },
-  {
-    id: 7,
-    headline: "Help Vikram Battle Acute Liver Failure",
-    patientName: "Vikram Das",
-    age: 51,
-    location: "PGIMER, Chandigarh",
-    disease: "Acute Liver Failure",
-    treatmentNeeded: "Liver Transplant",
-    raisedAmount: 2100000,
-    targetAmount: 3500000,
-    category: "Transplant",
-    isUrgent: true,
-    isVerified: true,
-    helpType: ["fund", "blood"],
-    image: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&q=80&w=800",
-    daysLeft: 3,
-  },
-  {
-    id: 8,
-    headline: "Young Riya Fights Brain Tumor With Courage",
-    patientName: "Riya Kapoor",
-    age: 14,
-    location: "NIMHANS, Bangalore",
-    disease: "Glioblastoma Multiforme",
-    treatmentNeeded: "Neurosurgery + Radiation",
-    raisedAmount: 900000,
-    targetAmount: 2000000,
-    category: "Cancer",
-    isUrgent: false,
-    isVerified: true,
-    helpType: ["fund"],
-    image: "https://images.unsplash.com/photo-1543269865-96ae8f8e0fd0?auto=format&fit=crop&q=80&w=800",
-    daysLeft: 14,
-  },
-  {
-    id: 9,
-    headline: "Emergency Blood Needed for Ananya's Surgery",
-    patientName: "Ananya Roy",
-    age: 27,
-    location: "SSKM, Kolkata",
-    disease: "Ruptured Ectopic Pregnancy",
-    treatmentNeeded: "Emergency Surgery + B+ Blood",
-    raisedAmount: 60000,
-    targetAmount: 120000,
-    category: "Emergency",
-    isUrgent: true,
-    isVerified: true,
-    helpType: ["fund", "blood"],
-    image: "https://images.unsplash.com/photo-1551601651-2a8555f1a136?auto=format&fit=crop&q=80&w=800",
-    daysLeft: 1,
-  },
-];
+import api from "@/lib/api";
 
 const CATEGORIES = ["All", "Surgery", "Cancer", "Emergency", "Transplant", "Rare Disease"];
 
@@ -190,13 +35,30 @@ const helpTypeIcon = (type: string) => {
 };
 
 export default function CasesPage() {
+  const [cases, setCases] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [sortBy, setSortBy] = useState("urgent");
   const [showFilters, setShowFilters] = useState(false);
 
+  useEffect(() => {
+    const fetchCases = async () => {
+      setLoading(true);
+      try {
+        const res = await api.get('/cases');
+        setCases(res.data.cases);
+      } catch (err) {
+        console.error("Failed to fetch cases:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCases();
+  }, []);
+
   const filteredCases = useMemo(() => {
-    let result = [...ALL_CASES];
+    let result = [...cases];
 
     // Filter by search
     if (search.trim()) {
@@ -223,18 +85,15 @@ export default function CasesPage() {
       case "funded":
         result.sort(
           (a, b) =>
-            b.raisedAmount / b.targetAmount - a.raisedAmount / a.targetAmount
+            (b.raisedAmount || 0) / (b.targetAmount || 1) - (a.raisedAmount || 0) / (a.targetAmount || 1)
         );
         break;
-      case "closing":
-        result.sort((a, b) => a.daysLeft - b.daysLeft);
-        break;
       default:
-        result.sort((a, b) => b.id - a.id);
+        result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
 
     return result;
-  }, [search, activeCategory, sortBy]);
+  }, [search, activeCategory, sortBy, cases]);
 
   return (
     <div className="min-h-screen bg-[#fafafa]">
@@ -254,7 +113,7 @@ export default function CasesPage() {
                 Every case is a <span className="text-emerald-600 italic">real</span> life.
               </h1>
               <p className="text-slate-500 max-w-sm leading-relaxed">
-                All {ALL_CASES.length} cases below have been manually verified by our compliance team.
+                All cases below have been manually verified by our compliance team.
               </p>
             </div>
 
@@ -406,7 +265,7 @@ export default function CasesPage() {
 
                           {/* Help-type chips at bottom of image */}
                           <div className="absolute bottom-3 left-3 flex gap-1.5">
-                            {item.helpType.map((ht) => (
+                            {item.helpType.map((ht: string) => (
                               <span key={ht} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/40 backdrop-blur text-white text-xs font-bold capitalize">
                                 {helpTypeIcon(ht)} {ht}
                               </span>

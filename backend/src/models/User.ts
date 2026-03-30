@@ -8,6 +8,7 @@ export interface IUser extends Document {
   profileImage?: string;
   role: 'patient' | 'donor' | 'admin';
   isVerified: boolean;
+  status: 'active' | 'banned';
   resetPasswordToken?: string | undefined;
   resetPasswordExpire?: Date | undefined;
   createdAt: Date;
@@ -21,6 +22,7 @@ const UserSchema: Schema = new Schema({
   profileImage: { type: String, default: '' },
   role: { type: String, enum: ['patient', 'donor', 'admin'], default: 'donor' },
   isVerified: { type: Boolean, default: false },
+  status: { type: String, enum: ['active', 'banned'], default: 'active' },
   resetPasswordToken: String,
   resetPasswordExpire: Date,
   createdAt: { type: Date, default: Date.now },

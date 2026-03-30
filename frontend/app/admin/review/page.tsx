@@ -32,6 +32,7 @@ export default function ReviewQueue() {
   const [selectedCase, setSelectedCase] = useState<any>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const fetchCases = async () => {
     try {
@@ -94,6 +95,8 @@ export default function ReviewQueue() {
                <input 
                   type="text" 
                   placeholder="Search applicants..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="h-12 pl-12 pr-6 rounded-2xl border border-slate-200 bg-white text-sm font-bold focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all w-64"
                />
             </div>
@@ -103,11 +106,14 @@ export default function ReviewQueue() {
          </div>
       </div>
 
-      {cases.length === 0 ? (
+      {cases.filter(c => 
+          c.patientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+          c._id.toLowerCase().includes(searchTerm.toLowerCase())
+       ).length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[40px] border-2 border-dashed border-slate-100 italic text-slate-300">
            <ShieldCheck className="w-16 h-16 mb-4 opacity-10" />
            <p className="text-sm font-black uppercase tracking-widest">Inbox Zero</p>
-           <p className="text-xs mt-2">All cases have been processed.</p>
+           <p className="text-xs mt-2">All cases have been processed or match your search.</p>
         </div>
       ) : (
         <div className="overflow-hidden bg-white rounded-[40px] border border-slate-100 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.05)]">
@@ -122,7 +128,10 @@ export default function ReviewQueue() {
               </tr>
             </thead>
             <tbody>
-              {cases.map((c) => (
+              {cases.filter(c => 
+                  c.patientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                  c._id.toLowerCase().includes(searchTerm.toLowerCase())
+               ).map((c) => (
                 <tr key={c._id} className="group hover:bg-slate-50 transition-colors">
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-4">

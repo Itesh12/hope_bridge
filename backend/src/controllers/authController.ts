@@ -77,6 +77,12 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
+    // Check if user is banned
+    if (user.status === 'banned') {
+      console.log('!! REJECTING: User is banned');
+      return res.status(403).json({ success: false, message: 'Your account has been suspended. Please contact support.' });
+    }
+
     // Check password
     const isMatch = await bcrypt.compare(password, user.password || '');
     console.log('Password Match:', isMatch);

@@ -44,8 +44,8 @@ export default function AdminLayout({
   const menuItems = [
     { name: "Dashboard", icon: LayoutDashboard, href: "/admin" },
     { name: "Review Queue", icon: ClipboardCheck, href: "/admin/review" },
-    { name: "All Cases", icon: FileText, href: "/admin/cases" },
-    { name: "Users", icon: Users, href: "/admin/users" },
+    { name: "Manage Inventory", icon: FileText, href: "/admin/cases" },
+    { name: "User Directory", icon: Users, href: "/admin/users" },
   ];
 
   return (

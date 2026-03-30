@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState, useRef, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function Navbar() {
@@ -21,6 +22,8 @@ export function Navbar() {
       .toUpperCase();
   };
 
+  const pathname = usePathname();
+
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -31,6 +34,12 @@ export function Navbar() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const navLinks = [
+    { href: "/cases", label: "Explore Cases" },
+    { href: "/how-it-works", label: "How it Works" },
+    { href: "/about", label: "About Us" },
+  ];
 
   return (
     <nav className="fixed top-0 w-full z-50 border-b border-emerald-50 bg-white/80 backdrop-blur-xl">
@@ -43,15 +52,15 @@ export function Navbar() {
         </Link>
 
         <div className="hidden md:flex items-center gap-10 text-sm font-black uppercase tracking-widest text-slate-400">
-          <Link href="/cases" className="hover:text-emerald-600 transition-colors">
-            Explore Cases
-          </Link>
-          <Link href="/how-it-works" className="hover:text-emerald-600 transition-colors">
-            How it Works
-          </Link>
-          <Link href="/about" className="hover:text-emerald-600 transition-colors">
-            About Us
-          </Link>
+          {navLinks.map((link) => (
+            <Link 
+              key={link.href}
+              href={link.href} 
+              className={`transition-colors ${pathname === link.href ? "text-emerald-600" : "hover:text-emerald-600"}`}
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
 
         <div className="flex items-center gap-4 relative" ref={menuRef}>
@@ -101,18 +110,22 @@ export function Navbar() {
                         <Link 
                           href="/cases" 
                           onClick={() => setIsMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-slate-50 transition-colors text-slate-600 font-bold text-sm group"
+                          className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all font-bold text-sm group ${
+                            pathname === '/cases' ? "bg-slate-50 text-emerald-700" : "hover:bg-slate-50 text-slate-600"
+                          }`}
                         >
-                          <LayoutDashboard className="w-4 h-4 group-hover:text-emerald-600 transition-colors" />
+                          <LayoutDashboard className={`w-4 h-4 transition-colors ${pathname === '/cases' ? "text-emerald-600" : "group-hover:text-emerald-600"}`} />
                           Explore Cases
                         </Link>
                         {user.role === 'admin' && (
                           <Link 
                             href="/admin" 
                             onClick={() => setIsMenuOpen(false)}
-                            className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-emerald-50 text-emerald-700 font-black text-sm group"
+                            className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all font-black text-sm group ${
+                              pathname.startsWith('/admin') ? "bg-emerald-50 text-emerald-700 font-black" : "hover:bg-slate-50 text-slate-600"
+                            }`}
                           >
-                            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                            <ShieldCheck className={`w-4 h-4 transition-colors ${pathname.startsWith('/admin') ? "text-emerald-600" : "group-hover:text-emerald-600"}`} />
                             Admin Panel
                           </Link>
                         )}

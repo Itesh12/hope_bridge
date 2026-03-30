@@ -13,6 +13,7 @@ import {
   TrendingDown
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import Link from "next/link";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<any>(null);
@@ -50,7 +51,8 @@ export default function AdminDashboard() {
       icon: FileText, 
       color: "bg-blue-50 text-blue-600",
       trend: "+12%",
-      isPositive: true
+      isPositive: true,
+      href: "/admin/cases"
     },
     { 
       label: "Pending Review", 
@@ -58,7 +60,8 @@ export default function AdminDashboard() {
       icon: Clock, 
       color: "bg-amber-50 text-amber-600",
       trend: "4 Required",
-      isPositive: false
+      isPositive: false,
+      href: "/admin/review"
     },
     { 
       label: "Total Raised", 
@@ -66,7 +69,8 @@ export default function AdminDashboard() {
       icon: TrendingUp, 
       color: "bg-emerald-50 text-emerald-600",
       trend: "+24%",
-      isPositive: true
+      isPositive: true,
+      href: "/admin"
     },
     { 
       label: "Total Users", 
@@ -74,7 +78,8 @@ export default function AdminDashboard() {
       icon: Users, 
       color: "bg-purple-50 text-purple-600",
       trend: "+8%",
-      isPositive: true
+      isPositive: true,
+      href: "/admin/users"
     },
   ];
 
@@ -89,23 +94,25 @@ export default function AdminDashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((stat, i) => (
-          <Card key={i} className="border-none shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] bg-white rounded-[32px] overflow-hidden group hover:shadow-emerald-900/5 transition-all">
-            <CardContent className="p-8">
-              <div className="flex items-start justify-between">
-                <div className={`w-14 h-14 ${stat.color} rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform`}>
-                   <stat.icon className="w-7 h-7" />
+          <Link key={i} href={stat.href}>
+            <Card className="border-none shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] bg-white rounded-[32px] overflow-hidden group hover:shadow-emerald-900/5 transition-all cursor-pointer">
+              <CardContent className="p-8">
+                <div className="flex items-start justify-between">
+                  <div className={`w-14 h-14 ${stat.color} rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform`}>
+                     <stat.icon className="w-7 h-7" />
+                  </div>
+                  <div className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1 ${stat.isPositive ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400'}`}>
+                     {stat.isPositive ? <ArrowUpRight className="w-3 h-3" /> : null}
+                     {stat.trend}
+                  </div>
                 </div>
-                <div className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1 ${stat.isPositive ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400'}`}>
-                   {stat.isPositive ? <ArrowUpRight className="w-3 h-3" /> : null}
-                   {stat.trend}
+                <div className="mt-6">
+                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
+                  <p className="text-3xl font-black text-slate-900 mt-1">{stat.value}</p>
                 </div>
-              </div>
-              <div className="mt-6">
-                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
-                <p className="text-3xl font-black text-slate-900 mt-1">{stat.value}</p>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
 

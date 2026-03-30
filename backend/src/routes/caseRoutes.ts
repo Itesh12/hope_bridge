@@ -9,7 +9,7 @@ const router = express.Router();
 
 router.get('/', getCases);
 router.get('/my', protect, getMyCases);
-router.get('/:id', getCase);
+router.get('/:id', optionalProtect, getCase);
 router.post('/', 
   protect, 
   authorize('patient', 'admin'), 

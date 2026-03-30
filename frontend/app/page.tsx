@@ -1,55 +1,35 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Heart, ShieldCheck, Users, Zap, ArrowUpRight, Plus, HeartPulse } from "lucide-react";
+import { CheckCircle2, Heart, ShieldCheck, Users, Zap, ArrowUpRight, Plus, HeartPulse, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
-
-const featuredCases = [
-  {
-    id: 1,
-    title: "Support Rahul's Urgent Heart Surgery",
-    patient: "Rahul Sharma",
-    age: 8,
-    image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?auto=format&fit=crop&q=80&w=800",
-    raised: 450000,
-    goal: 600000,
-    category: "Surgery",
-    urgent: true,
-    verified: true,
-  },
-  {
-    id: 2,
-    title: "Help Meera Fight Rare Bone Cancer",
-    patient: "Meera Reddy",
-    age: 24,
-    image: "https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&q=80&w=800",
-    raised: 1200000,
-    goal: 2500000,
-    category: "Cancer",
-    urgent: false,
-    verified: true,
-  },
-  {
-    id: 3,
-    title: "Emergency Care for Accident Recovery",
-    patient: "Amit Singh",
-    age: 32,
-    image: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=800",
-    raised: 200000,
-    goal: 300000,
-    category: "Emergency",
-    urgent: true,
-    verified: true,
-  },
-];
+import api from "@/lib/api";
 
 export default function Home() {
   const { user } = useAuth();
+  const [featuredCases, setFeaturedCases] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCases = async () => {
+      try {
+        const res = await api.get('/cases');
+        // Take top 3 for featured
+        setFeaturedCases(res.data.cases.slice(0, 3));
+      } catch (err) {
+        console.error("Failed to fetch featured cases:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCases();
+  }, []);
   return (
     <div className="min-h-screen bg-[#fafafa]">
       {/* --- HERO SECTION --- */}
@@ -166,21 +146,21 @@ export default function Home() {
                 <Card className="h-full border-none shadow-[0_4px_20px_rgba(0,0,0,0.03)] bg-slate-50/50 hover:bg-white hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.08)] transition-all duration-500 rounded-[32px] overflow-hidden flex flex-col pt-0">
                   <div className="relative h-64 overflow-hidden bg-slate-100 flex-shrink-0">
                     <img 
-                      src={item.image} 
+                      src={item.documents?.[0] || item.image} 
                       className="w-full h-full object-cover grayscale-[0.2] transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0" 
-                      alt={item.title}
+                      alt={item.headline}
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     
                     {/* Floating Badges */}
                     <div className="absolute top-4 left-4 flex flex-col gap-2">
-                      {item.urgent && (
+                      {item.isUrgent && (
                         <Badge className="bg-red-500 text-white border-none font-bold px-3 py-1 shadow-lg shadow-red-200">
                           Urgent
                         </Badge>
                       )}
-                      {item.verified && (
+                      {item.isVerified && (
                         <Badge className="bg-white/90 backdrop-blur text-emerald-700 border-none font-bold px-3 py-1 flex gap-1.5 items-center shadow-lg">
                           <CheckCircle2 className="w-3.5 h-3.5" /> Verified
                         </Badge>
@@ -193,11 +173,11 @@ export default function Home() {
                       <span className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">{item.category}</span>
                     </div>
                     <CardTitle className="text-2xl font-bold text-slate-900 leading-tight mb-3">
-                      {item.title}
+                      {item.headline}
                     </CardTitle>
                     <div className="flex items-center gap-3 text-slate-500">
-                       <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold">{item.patient[0]}</div>
-                       <p className="text-sm font-medium">{item.patient}, {item.age} yrs</p>
+                       <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold">{item.patientName?.[0]}</div>
+                       <p className="text-sm font-medium">{item.patientName}, {item.age} yrs</p>
                     </div>
                   </CardHeader>
 
@@ -206,17 +186,17 @@ export default function Home() {
                       <div className="flex justify-between items-end">
                         <div className="space-y-1">
                           <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Raised</p>
-                          <p className="text-xl font-black text-slate-900">₹{item.raised.toLocaleString('en-IN')}</p>
+                          <p className="text-xl font-black text-slate-900">₹{(item.raisedAmount || 0).toLocaleString('en-IN')}</p>
                         </div>
                         <div className="text-right space-y-1">
                           <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Goal</p>
-                          <p className="text-sm font-bold text-slate-600">₹{item.goal.toLocaleString('en-IN')}</p>
+                          <p className="text-sm font-bold text-slate-600">₹{(item.targetAmount || 0).toLocaleString('en-IN')}</p>
                         </div>
                       </div>
                       <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
                         <motion.div 
                           initial={{ width: 0 }}
-                          whileInView={{ width: `${(item.raised / item.goal) * 100}%` }}
+                          whileInView={{ width: `${((item.raisedAmount || 0) / (item.targetAmount || 1)) * 100}%` }}
                           transition={{ duration: 1.5, ease: "easeOut" }}
                           className="h-full bg-emerald-500 relative"
                         >
@@ -227,9 +207,12 @@ export default function Home() {
                   </CardContent>
 
                   <CardFooter className="px-8 pb-10 mt-auto">
-                    <Button className="w-full h-14 rounded-2xl bg-slate-900 hover:bg-emerald-600 text-white transition-all font-bold text-lg group-hover:shadow-2xl group-hover:shadow-emerald-200">
-                      Help {item.patient.split(' ')[0]} Now
-                    </Button>
+                    <Link
+                      href={`/cases/${item._id}`}
+                      className="w-full h-14 rounded-2xl bg-slate-900 hover:bg-emerald-600 text-white transition-all font-bold text-lg group-hover:shadow-2xl group-hover:shadow-emerald-200 flex items-center justify-center"
+                    >
+                      Help {item.patientName?.split(' ')[0]} Now
+                    </Link>
                   </CardFooter>
                 </Card>
               </motion.div>

@@ -18,6 +18,7 @@ export interface ICase extends Document {
   patientImage?: string;
   coverImage?: string;
   documents: string[]; // URLs up to 5
+  verificationStatus: 'pending' | 'approved' | 'rejected';
   rejectionReason?: string;
   isUrgent: boolean;
   isVerified: boolean;
@@ -30,11 +31,11 @@ const CaseSchema: Schema = new Schema({
   age: { type: Number, required: true },
   location: { type: String, required: true },
   disease: { type: String, required: true },
-  category: { 
-    type: String, 
-    enum: ['Cancer', 'Accident', 'Pediatric', 'Transplant', 'Cardiac', 'Other'], 
+  category: {
+    type: String,
+    enum: ['Cancer', 'Accident', 'Pediatric', 'Transplant', 'Cardiac', 'Other'],
     default: 'Other',
-    required: true 
+    required: true
   },
   hospitalName: { type: String, required: true },
   treatmentNeeded: { type: String, required: true },

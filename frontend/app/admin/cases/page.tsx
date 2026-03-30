@@ -2,31 +2,41 @@
 
 import React, { useEffect, useState } from "react";
 import api from "@/lib/api";
-import Link from "next/link";
 import { 
-  CheckCircle2, 
-  XCircle, 
+  FileText, 
+  Search, 
+  Filter, 
+  MoreVertical, 
+  RotateCcw, 
+  Trash2, 
+  Eye, 
   Clock, 
-  Search,
-  Filter,
-  Eye,
-  FileText,
-  AlertTriangle
+  CheckCircle, 
+  AlertCircle,
+  TrendingUp,
+  MapPin,
+  Calendar,
+  ChevronRight,
+  Loader2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 
-export default function AllCasesAdmin() {
+export default function ManageInventory() {
   const [cases, setCases] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
 
   const fetchCases = async () => {
+    setLoading(true);
     try {
-      const url = filter === "all" ? "/admin/cases" : `/admin/cases?status=${filter}`;
-      const res = await api.get(url);
+      const res = await api.get(`/admin/cases?status=${filter}`);
       setCases(res.data.cases);
     } catch (error) {
-      console.error("Failed to fetch all cases:", error);
+      console.error("Failed to fetch cases:", error);
     } finally {
       setLoading(false);
     }
@@ -36,113 +46,181 @@ export default function AllCasesAdmin() {
     fetchCases();
   }, [filter]);
 
-  if (loading) {
-    return (
-       <div className="space-y-4">
-         {[...Array(5)].map((_, i) => (
-           <div key={i} className="h-20 bg-slate-100 rounded-2xl animate-pulse" />
-         ))}
-       </div>
-    );
-  }
+  const handleRevert = async (id: string) => {
+    if (!window.confirm("Move this case back to Pending status? it will appear in your Review Queue again.")) return;
+    try {
+      await api.patch(`/admin/cases/${id}/verify`, { status: "pending" });
+      alert("Case reverted successfully");
+      fetchCases();
+    } catch (error) {
+      alert("Failed to revert case");
+    }
+  };
 
-  const getStatusBadge = (status: string) => {
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure? This delete is permanent and cannot be undone.")) return;
+    try {
+      await api.delete(`/admin/cases/${id}`);
+      alert("Case deleted successfully");
+      fetchCases();
+    } catch (error) {
+      alert("Failed to delete case");
+    }
+  };
+
+  const filteredCases = cases.filter(c => 
+    c.headline.toLowerCase().includes(search.toLowerCase()) ||
+    c.patientName.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'approved':
-        return <Badge className="bg-emerald-50 text-emerald-600 border-none px-3 py-1 rounded-lg uppercase tracking-widest text-[10px] font-black underline-offset-4">Verified</Badge>;
-      case 'rejected':
-        return <Badge className="bg-red-50 text-red-600 border-none px-3 py-1 rounded-lg uppercase tracking-widest text-[10px] font-black">Rejected</Badge>;
-      default:
-        return <Badge className="bg-amber-50 text-amber-600 border-none px-3 py-1 rounded-lg uppercase tracking-widest text-[10px] font-black">Pending</Badge>;
+      case 'approved': return <CheckCircle className="w-4 h-4 text-emerald-500" />;
+      case 'rejected': return <AlertCircle className="w-4 h-4 text-red-500" />;
+      default: return <Clock className="w-4 h-4 text-amber-500" />;
     }
   };
 
   return (
     <div className="space-y-10">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-         <div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Case Repository</h2>
-            <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Management of All Platform Content</p>
-         </div>
-         
-         <div className="flex items-center gap-3">
-            <div className="bg-white border border-slate-200 rounded-2xl p-1 flex gap-1">
-               {['all', 'pending', 'approved', 'rejected'].map((f) => (
-                  <button 
-                     key={f}
-                     onClick={() => setFilter(f)}
-                     className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filter === f ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/10' : 'text-slate-400 hover:text-slate-900'}`}
-                  >
-                     {f}
-                  </button>
-               ))}
-            </div>
-            <button className="w-12 h-12 rounded-2xl border border-slate-200 bg-white flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all shadow-sm">
-               <Search className="w-5 h-5" />
-            </button>
-         </div>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <h2 className="text-4xl font-black text-slate-900 tracking-tighter leading-none">Master Inventory</h2>
+          <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px] mt-3">Full platform records · {cases.length} Total Appeals</p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-4">
+           <div className="relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
+              <input 
+                type="text" 
+                placeholder="Search cases..." 
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-12 pl-12 pr-6 rounded-2xl border border-slate-200 bg-white text-sm font-bold focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all w-64"
+              />
+           </div>
+
+           <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200">
+              {['all', 'pending', 'approved', 'rejected'].map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setFilter(s)}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                    filter === s ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+           </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {cases.map((c) => (
-          <div key={c._id} className="bg-white rounded-[40px] border border-slate-100 p-8 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.05)] hover:shadow-emerald-900/5 transition-all group overflow-hidden relative">
-            <div className="flex items-start justify-between mb-6">
-               <div className="w-14 h-14 rounded-2xl bg-slate-100 overflow-hidden shadow-inner">
-                  {c.patientImage ? (
-                     <img src={c.patientImage} className="w-full h-full object-cover" alt="" />
-                  ) : (
-                     <div className="w-full h-full flex items-center justify-center text-slate-300 uppercase font-black text-xl">
-                        {c.patientName[0]}
-                     </div>
-                  )}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-32 space-y-4">
+          <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
+          <p className="text-slate-400 font-black text-xs uppercase tracking-widest">Accessing platform vault...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4">
+          <AnimatePresence mode="popLayout">
+            {filteredCases.map((c, i) => (
+              <motion.div
+                key={c._id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ delay: i * 0.05 }}
+                className="group bg-white rounded-[32px] border border-slate-100 p-6 flex flex-col md:flex-row items-center justify-between gap-6 hover:shadow-xl hover:shadow-slate-200/50 transition-all hover:border-emerald-100"
+              >
+                <div className="flex items-center gap-6 w-full md:w-auto">
+                   <div className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-inner flex-shrink-0">
+                      <img src={c.documents?.[0]} className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-700" alt="" />
+                      <div className="absolute inset-0 bg-slate-900/5 group-hover:bg-transparent transition-colors" />
+                   </div>
+                   
+                   <div className="space-y-1">
+                      <div className="flex items-center gap-3">
+                         <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest px-2 py-0.5 bg-emerald-50 rounded-md">
+                           {c.category}
+                         </span>
+                         <span className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                           <MapPin className="w-3 h-3" /> {c.location}
+                         </span>
+                      </div>
+                      <h3 className="text-xl font-black text-slate-900 tracking-tight leading-tight group-hover:text-emerald-700 transition-colors uppercase decoration-emerald-500/30 group-hover:underline underline-offset-4">{c.headline}</h3>
+                      <div className="flex items-center gap-4 text-slate-400">
+                         <p className="text-[10px] font-bold tracking-widest uppercase flex items-center gap-1.5">
+                            <TrendingUp className="w-3 h-3" /> ₹{c.targetAmount.toLocaleString()}
+                         </p>
+                         <div className="w-1 h-1 bg-slate-200 rounded-full" />
+                         <p className="text-[10px] font-bold tracking-widest uppercase flex items-center gap-1.5">
+                            <Calendar className="w-3 h-3" /> {new Date(c.createdAt).toLocaleDateString()}
+                         </p>
+                      </div>
+                   </div>
+                </div>
+
+                <div className="flex items-center gap-10 w-full md:w-auto justify-between md:justify-end">
+                   <div className="flex items-center gap-3 px-6 h-12 bg-slate-50/80 rounded-2xl border border-slate-100">
+                      {getStatusIcon(c.verificationStatus)}
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">{c.verificationStatus}</span>
+                   </div>
+
+                   <div className="flex items-center gap-3">
+                      <Link 
+                        href={`/cases/${c._id}`}
+                        className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 flex items-center justify-center transition-all shadow-sm group/btn"
+                      >
+                        <Eye className="w-5 h-5 transition-transform group-hover/btn:scale-110" />
+                      </Link>
+
+                      {c.verificationStatus !== 'pending' && (
+                        <button 
+                          onClick={() => handleRevert(c._id)}
+                          className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 border border-amber-100 hover:bg-amber-100 flex items-center justify-center transition-all shadow-sm group/btn"
+                          title="Revert to Pending"
+                        >
+                          <RotateCcw className="w-5 h-5 transition-transform group-hover/btn:-rotate-45" />
+                        </button>
+                      )}
+
+                      <button 
+                         onClick={() => handleDelete(c._id)}
+                         className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 flex items-center justify-center transition-all shadow-sm group/btn"
+                         title="Delete Case"
+                      >
+                        <Trash2 className="w-5 h-5 transition-transform group-hover/btn:scale-110" />
+                      </button>
+                      
+                      <ChevronRight className="w-5 h-5 text-slate-200 ml-2 group-hover:translate-x-1 transition-transform" />
+                   </div>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+
+          {filteredCases.length === 0 && (
+            <div className="py-32 text-center space-y-6">
+               <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto opacity-50">
+                  <FileText className="w-10 h-10 text-slate-300" />
                </div>
-               {getStatusBadge(c.verificationStatus)}
+               <div className="space-y-2">
+                 <h4 className="text-xl font-bold text-slate-900 uppercase tracking-tighter">No cases found</h4>
+                 <p className="text-slate-400 text-sm font-medium">Try adjusting your filters or search terms.</p>
+               </div>
+               <Button 
+                variant="outline" 
+                onClick={() => {setFilter('all'); setSearch('');}}
+                className="rounded-2xl border-slate-200"
+               >
+                 Show All Records
+               </Button>
             </div>
-
-            <div className="space-y-4">
-               <div>
-                  <h4 className="text-lg font-black text-slate-900 tracking-tight leading-tight group-hover:text-emerald-600 transition-colors uppercase">{c.patientName}</h4>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Creator: {c.createdBy?.name || "Member"}</p>
-               </div>
-               
-               <div className="flex items-center gap-6 py-4 border-y border-slate-50">
-                  <div>
-                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Raised</p>
-                     <p className="text-sm font-black text-slate-900">₹{c.raisedAmount.toLocaleString("en-IN")}</p>
-                  </div>
-                  <div>
-                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Target</p>
-                     <p className="text-sm font-black text-slate-900">₹{c.targetAmount.toLocaleString("en-IN")}</p>
-                  </div>
-               </div>
-
-               <div className="flex items-center justify-between pt-2">
-                  <div className="flex items-center gap-1.5">
-                     <Clock className="w-3.5 h-3.5 text-slate-300" />
-                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{new Date(c.createdAt).toLocaleDateString()}</span>
-                  </div>
-                  <Link 
-                     href={`/cases/${c._id}`}
-                     className="px-6 h-10 bg-slate-50 hover:bg-slate-900 hover:text-white text-slate-900 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all flex items-center gap-2"
-                  >
-                     Manage <Eye className="w-3.5 h-3.5" />
-                  </Link>
-               </div>
-            </div>
-
-            {/* Rejection indicator if approriate */}
-            {c.verificationStatus === 'rejected' && (
-               <div className="mt-4 p-4 rounded-2xl bg-red-50/50 border border-red-100 flex items-start gap-3">
-                  <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-[10px] font-bold text-red-600/70 overflow-hidden line-clamp-2">Reason: {c.rejectionReason}</p>
-               </div>
-            )}
-            
-            {/* Visual background element */}
-            <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-slate-50 rounded-full group-hover:scale-150 transition-transform duration-700 -z-10" />
-          </div>
-        ))}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

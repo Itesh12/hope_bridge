@@ -88,9 +88,90 @@ export const getAllCasesAdmin = async (req: Request, res: Response) => {
   try {
     const { status } = req.query;
     let query: any = {};
-    if (status) query.verificationStatus = status;
+    if (status && status !== 'all') query.verificationStatus = status;
 
     const cases = await Case.find(query).populate('createdBy', 'name email').sort({ createdAt: -1 });
+    res.status(200).json({ success: true, count: cases.length, cases });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Update user status (Ban/Activate)
+// @route   PATCH /api/admin/users/:id/status
+// @access  Private (Admin)
+export const updateUserStatus = async (req: Request, res: Response) => {
+  try {
+    const { status } = req.body;
+    if (!['active', 'banned'].includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid status' });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    if (user.role === 'admin') {
+      return res.status(400).json({ success: false, message: 'Cannot change status of another admin' });
+    }
+
+    user.status = status;
+    await user.save();
+
+    res.status(200).json({ success: true, user });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Delete user
+// @route   DELETE /api/admin/users/:id
+// @access  Private (Admin)
+export const deleteUser = async (req: Request, res: Response) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    if (user.role === 'admin') {
+      return res.status(400).json({ success: false, message: 'Cannot delete another admin' });
+    }
+
+    // Delete all cases created by this user
+    await Case.deleteMany({ createdBy: req.params.id as any });
+    await user.deleteOne();
+
+    res.status(200).json({ success: true, message: 'User and their cases deleted successfully' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Delete case
+// @route   DELETE /api/admin/cases/:id
+// @access  Private (Admin)
+export const deleteCase = async (req: Request, res: Response) => {
+  try {
+    const caseData = await Case.findById(req.params.id);
+    if (!caseData) {
+      return res.status(404).json({ success: false, message: 'Case not found' });
+    }
+
+    await caseData.deleteOne();
+    res.status(200).json({ success: true, message: 'Case deleted successfully' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get user activity (cases created)
+// @route   GET /api/admin/users/:id/activity
+// @access  Private (Admin)
+export const getUserActivity = async (req: Request, res: Response) => {
+  try {
+    const cases = await Case.find({ createdBy: req.params.id as any }).sort({ createdAt: -1 });
     res.status(200).json({ success: true, count: cases.length, cases });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
