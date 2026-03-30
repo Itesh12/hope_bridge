@@ -71,10 +71,9 @@ export const createCase = async (req: any, res: Response) => {
 // @access  Public
 export const getCases = async (req: Request, res: Response) => {
   try {
-    const { status, category, urgent } = req.query;
-    let query: any = {};
+    const { category, urgent } = req.query;
+    let query: any = { verificationStatus: 'approved' };
     
-    if (status) query.verificationStatus = status;
     if (urgent) query.isUrgent = urgent === 'true';
     // Add category filter if disease matches or by category list later
 

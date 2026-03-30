@@ -18,7 +18,7 @@ export interface ICase extends Document {
   patientImage?: string;
   coverImage?: string;
   documents: string[]; // URLs up to 5
-  verificationStatus: 'pending' | 'approved' | 'rejected';
+  rejectionReason?: string;
   isUrgent: boolean;
   isVerified: boolean;
   createdAt: Date;
@@ -54,6 +54,7 @@ const CaseSchema: Schema = new Schema({
     ]
   },
   verificationStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+  rejectionReason: { type: String, default: '' },
   isUrgent: { type: Boolean, default: false },
   isVerified: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
